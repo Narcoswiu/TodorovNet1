@@ -16,15 +16,18 @@
 </div>
 
 <table id="resultsTable" class="table table-striped text-center align-middle">
+    <
     <thead class="table-dark">
         <tr>
             <th>#</th>
             <th>Име</th>
             <th>Отбор</th>
             <th>Време</th>
-            <th>Финал</th>
+            <th>+Наказ.</th>
+            <th>Общо</th>
         </tr>
     </thead>
+
     <tbody></tbody>
 </table>
 
@@ -39,16 +42,36 @@
 
     // Зареждане на текущите резултати (от базата)
     async function loadExistingResults() {
-        const eventId = currentEventId();
-        const res = await fetch(`/api/Results/${eventId}`);
-        if (!res.ok) {
-            console.error("Грешка при зареждане:", res.status);
-            tbody.innerHTML = `<tr><td colspan="5">Няма данни или грешка (${res.status}).</td></tr>`;
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = parseInt(urlParams.get("eventId") || "1", 10);
+
+        const res = await fetch(`/api/Results/standings/${eventId}`);
+        if (!res.ok) { console.error("Standings error", res.status); return; }
+        const data = await res.json();
+        renderStandings(data);
+    }
+
+    function renderStandings(list) {
+        const tbody = document.querySelector("#resultsTable tbody");
+        tbody.innerHTML = "";
+        if (!Array.isArray(list) || list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6">Няма класиране.</td></tr>`;
             return;
         }
-        const results = await res.json();
-        render(results);
+        list.forEach(r => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                      <td>${r.number}</td>
+                      <td>${r.name}</td>
+                      <td>${r.team}</td>
+                      <td>${r.lapTime}</td>
+                      <td>${r.penaltySeconds}s</td>
+                      <td><strong>${r.adjustedLapTime}</strong></td>
+                    `;
+            tbody.appendChild(tr);
+        });
     }
+
 
     function render(list) {
         tbody.innerHTML = "";
@@ -59,16 +82,30 @@
         list.forEach(addRow);
     }
 
+    const connection = new signalR.HubConnectionBuilder().withUrl("/timingHub").build();
+
+    connection.on("NewResult", _ => loadExistingResults());
+    connection.on("PenaltyUpdated", _ => loadExistingResults());
+
+    connection.start()
+        .then(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get("eventId") || "1";
+            try { connection.invoke("SubscribeToEvent", String(eventId)); } catch { }
+            loadExistingResults();
+        })
+        .catch(console.error);
+
     // Добавя един ред
     function addRow(data) {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td>${data.participant?.number ?? data.participantId ?? "—"}</td>
-            <td>${data.participant?.name ?? "—"}</td>
-            <td>${data.participant?.team ?? "—"}</td>
-            <td>${formatLapTime(data.lapTime)}</td>
-            <td>${data.isFinal ? "✅" : ""}</td>
-        `;
+                            <td>${data.participant?.number ?? data.participantId ?? "—"}</td>
+                            <td>${data.participant?.name ?? "—"}</td>
+                            <td>${data.participant?.team ?? "—"}</td>
+                            <td>${formatLapTime(data.lapTime)}</td>
+                            <td>${data.isFinal ? "✅" : ""}</td>
+                        `;
         tbody.appendChild(tr);
     }
 
@@ -103,7 +140,7 @@
     function reload() {
         loadExistingResults();
         // опционално: промяна на групата в хъба, ако имаш SubscribeToEvent
-        try { connection.invoke("SubscribeToEvent", String(currentEventId())); } catch {}
+        try { connection.invoke("SubscribeToEvent", String(currentEventId())); } catch { }
     }
 
     // SignalR за live
@@ -116,11 +153,11 @@
     connection.on("PenaltyUpdated", _ => loadExistingResults());
 
     connection.start()
-    .then(() => {
-        console.log("✅ Свързано с TimingHub");
-        connection.invoke("SubscribeToEvent", String(currentEventId())).catch(console.error);
-        loadExistingResults();
-    })
-    .catch(err => console.error("❌ SignalR:", err));
+        .then(() => {
+            console.log("✅ Свързано с TimingHub");
+            connection.invoke("SubscribeToEvent", String(currentEventId())).catch(console.error);
+            loadExistingResults();
+        })
+        .catch(err => console.error("❌ SignalR:", err));
 
 </script>
