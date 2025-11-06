@@ -66,17 +66,16 @@ namespace TodorovNet.Controllers
                 .Where(r => r.EventId == eventId && r.IsFinal)
                 .ToListAsync();
 
-            // (по желание) ако има няколко финални за участник – вземи най-добрия
-            raw = raw
-                .GroupBy(r => r.ParticipantId)
-                .Select(g => g.OrderBy(x => x.LapTime).First())
-                .ToList();
+            // по избор: най-бързият финален за участник
+            raw = raw.GroupBy(r => r.ParticipantId)
+                     .Select(g => g.OrderBy(x => x.LapTime).First())
+                     .ToList();
 
             var rows = raw
                 .Select(r =>
                 {
                     var penSec = penalties.TryGetValue(r.ParticipantId, out var s) ? s : 0;
-                    var baseSpan = r.LapTime; // TimeSpan
+                    var baseSpan = r.LapTime;
                     var adjustedSpan = baseSpan + TimeSpan.FromSeconds(penSec);
 
                     return new
@@ -91,7 +90,7 @@ namespace TodorovNet.Controllers
                         r.IsFinal
                     };
                 })
-                .OrderBy(x => x.AdjustedSpan) // ✅ сортиране по реален TimeSpan
+                .OrderBy(x => x.AdjustedSpan)
                 .Select(x => new TodorovNet.Models.Dtos.StandingRow
                 {
                     ParticipantId = x.ParticipantId,
@@ -107,6 +106,7 @@ namespace TodorovNet.Controllers
 
             return Ok(rows);
         }
+
 
     }
 }

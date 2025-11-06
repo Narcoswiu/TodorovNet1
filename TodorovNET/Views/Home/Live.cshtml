@@ -51,6 +51,18 @@
         renderStandings(data);
     }
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = parseInt(urlParams.get("eventId") || "1", 10);
+
+    async function loadStandings() {
+        const res = await fetch(`/api/Results/standings/${eventId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        render(data);
+    }
+
+
+
     function renderStandings(list) {
         const tbody = document.querySelector("#resultsTable tbody");
         tbody.innerHTML = "";
