@@ -1,0 +1,49 @@
+﻿@model TodorovNet.Models.Penalty
+@using TodorovNet.Models
+
+@{
+    Layout = "_Layout";
+    var eventId = (int)ViewBag.EventId;
+    var parts = (IEnumerable<TodorovNet.Models.Participant>)ViewBag.Participants;
+    ViewData["Title"] = "Ново наказание";
+}
+
+<h2 class="mb-3">Ново наказание – Event #@eventId</h2>
+
+<form method="post">
+  <input type="hidden" asp-for="EventId" />
+
+  <div class="mb-3">
+    <label class="form-label">Участник</label>
+    <select class="form-select" asp-for="ParticipantId" required>
+      @foreach (var p in parts)
+      {
+        <option value="@p.Id">@p.Number — @p.Name</option>
+      }
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Тип</label>
+    <select class="form-select" asp-for="Type">
+      @foreach (var t in Enum.GetValues(typeof(PenaltyType)))
+      {
+        <option value="@t">@t</option>
+      }
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Секунди</label>
+    <input class="form-control" asp-for="Seconds" type="number" min="1" required />
+    <span class="text-muted">Колко секунди да се добавят към времето.</span>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Причина (по желание)</label>
+    <input class="form-control" asp-for="Reason" maxlength="256" />
+  </div>
+
+  <button class="btn btn-success" type="submit">Запази</button>
+  <a class="btn btn-secondary" href="/Penalties?eventId=@eventId">Откажи</a>
+</form>

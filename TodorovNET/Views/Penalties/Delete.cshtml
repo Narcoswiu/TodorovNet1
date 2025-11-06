@@ -1,0 +1,31 @@
+﻿@model TodorovNet.Models.Penalty
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Изтриване на наказание";
+}
+
+<h2 class="mb-3 text-danger">Изтриване на наказание</h2>
+
+<div class="alert alert-warning">
+  Сигурни ли сте, че искате да изтриете това наказание?
+</div>
+
+<dl class="row">
+  <dt class="col-sm-2">Участник</dt>
+  <dd class="col-sm-10">@Model.Participant?.Number — @Model.Participant?.Name</dd>
+
+  <dt class="col-sm-2">Тип</dt>
+  <dd class="col-sm-10">@Model.Type</dd>
+
+  <dt class="col-sm-2">Секунди</dt>
+  <dd class="col-sm-10">@Model.Seconds</dd>
+
+  <dt class="col-sm-2">Причина</dt>
+  <dd class="col-sm-10">@Model.Reason</dd>
+</dl>
+
+<form method="post" asp-action="Delete">
+  <input type="hidden" asp-for="Id" />
+  <button class="btn btn-danger" type="submit">Да, изтрий</button>
+  <a class="btn btn-secondary" href="/Penalties?eventId=@Model.EventId">Откажи</a>
+</form>

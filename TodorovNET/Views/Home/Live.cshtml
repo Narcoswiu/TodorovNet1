@@ -1,0 +1,126 @@
+﻿@{
+    ViewData["Title"] = "Live Results";
+    // eventId от query ?eventId=..., по подразбиране 1
+    var qsEventId = Context.Request.Query["eventId"].FirstOrDefault() ?? "1";
+}
+
+<h2 class="mt-3 mb-3 text-center">🏁 Live Results</h2>
+
+<div class="d-flex gap-2 align-items-end mb-3">
+    <div style="max-width:200px">
+        <label class="form-label">Събитие ID</label>
+        <input id="eventIdInput" class="form-control" value="@qsEventId" />
+    </div>
+    <button class="btn btn-primary" onclick="reload()">Зареди</button>
+    <a class="btn btn-outline-secondary" href="/EventsUi">Състезания</a>
+</div>
+
+<table id="resultsTable" class="table table-striped text-center align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>#</th>
+            <th>Име</th>
+            <th>Отбор</th>
+            <th>Време</th>
+            <th>Финал</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+    const tbody = document.querySelector("#resultsTable tbody");
+
+    function currentEventId() {
+        const v = document.getElementById('eventIdInput').value?.trim() || "1";
+        return parseInt(v, 10);
+    }
+
+    // Зареждане на текущите резултати (от базата)
+    async function loadExistingResults() {
+        const eventId = currentEventId();
+        const res = await fetch(`/api/Results/${eventId}`);
+        if (!res.ok) {
+            console.error("Грешка при зареждане:", res.status);
+            tbody.innerHTML = `<tr><td colspan="5">Няма данни или грешка (${res.status}).</td></tr>`;
+            return;
+        }
+        const results = await res.json();
+        render(results);
+    }
+
+    function render(list) {
+        tbody.innerHTML = "";
+        if (!Array.isArray(list) || list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5">Няма резултати за това събитие.</td></tr>`;
+            return;
+        }
+        list.forEach(addRow);
+    }
+
+    // Добавя един ред
+    function addRow(data) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${data.participant?.number ?? data.participantId ?? "—"}</td>
+            <td>${data.participant?.name ?? "—"}</td>
+            <td>${data.participant?.team ?? "—"}</td>
+            <td>${formatLapTime(data.lapTime)}</td>
+            <td>${data.isFinal ? "✅" : ""}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    // Форматира TimeSpan/стринг към HH:MM:SS
+    function formatLapTime(lapTime) {
+        if (!lapTime) return "—";
+
+        if (typeof lapTime === "string") {
+            // "00:01:08.3000000" -> мачва HH:MM:SS и отрязва остатъка
+            const m = lapTime.match(/^(\d{1,2}):(\d{2}):(\d{2})/);
+            if (m) {
+                const hh = m[1].padStart(2, "0");
+                const mm = m[2];
+                const ss = m[3];
+                return `${hh}:${mm}:${ss}`;
+            }
+            if (lapTime.includes(".")) return lapTime.split(".")[0];
+            return lapTime;
+        }
+
+        // fallback, ако получиш милисекунди като число
+        if (typeof lapTime === "number") {
+            const total = Math.floor(lapTime / 1000);
+            const hh = String(Math.floor(total / 3600)).padStart(2, "0");
+            const mm = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+            const ss = String(total % 60).padStart(2, "0");
+            return `${hh}:${mm}:${ss}`;
+        }
+        return "—";
+    }
+
+    function reload() {
+        loadExistingResults();
+        // опционално: промяна на групата в хъба, ако имаш SubscribeToEvent
+        try { connection.invoke("SubscribeToEvent", String(currentEventId())); } catch {}
+    }
+
+    // SignalR за live
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/timingHub")
+        .build();
+
+    connection.on("NewResult", _ => loadExistingResults());
+    // ако по-късно добавиш наказания:
+    connection.on("PenaltyUpdated", _ => loadExistingResults());
+
+    connection.start()
+    .then(() => {
+        console.log("✅ Свързано с TimingHub");
+        connection.invoke("SubscribeToEvent", String(currentEventId())).catch(console.error);
+        loadExistingResults();
+    })
+    .catch(err => console.error("❌ SignalR:", err));
+
+</script>

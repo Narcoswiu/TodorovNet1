@@ -1,0 +1,36 @@
+﻿@model IEnumerable<TodorovNet.Models.Penalty>
+@{ 
+    Layout = "_Layout";
+    var eventId = (int)ViewBag.EventId;
+    ViewData["Title"]="Наказания";
+}
+<h2 class="mb-3">Наказания – Event #@eventId</h2>
+
+<p>
+    <a class="btn btn-primary" href="/Penalties/Create?eventId=@eventId">+ Ново наказание</a>
+    <a class="btn btn-outline-secondary" href="/EventsUi">⬅ Събития</a>
+</p>
+
+<table class="table table-striped align-middle">
+  <thead class="table-dark">
+    <tr>
+      <th>№</th><th>Име</th><th>Тип</th><th>Секунди</th><th>Причина</th><th>Кога</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  @foreach (var p in Model)
+  {
+    <tr>
+      <td>@p.Participant?.Number</td>
+      <td>@p.Participant?.Name</td>
+      <td>@p.Type</td>
+      <td>@p.Seconds</td>
+      <td>@p.Reason</td>
+      <td>@p.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+      <td>
+        <a class="btn btn-sm btn-outline-danger" href="/Penalties/Delete/@p.Id">Изтрий</a>
+      </td>
+    </tr>
+  }
+  </tbody>
+</table>

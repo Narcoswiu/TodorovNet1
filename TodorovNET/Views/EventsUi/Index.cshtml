@@ -1,0 +1,24 @@
+﻿@model IEnumerable<TodorovNet.Models.Event>
+@{ ViewData["Title"]="Състезания"; }
+
+<h2 class="mb-3">Състезания</h2>
+<table class="table table-striped">
+  <thead class="table-dark">
+    <tr><th>#</th><th>Заглавие</th><th>Дата</th><th></th></tr>
+  </thead>
+  <tbody>
+  @foreach(var e in Model)
+  {
+    <tr>
+      <td>@e.Id</td>
+      <td>@e.Title</td>
+      <td>@e.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+      <td>
+        <a class="btn btn-sm btn-primary" href="/EventsUi/Participants/@e.Id">Участници</a>
+        <a class="btn btn-sm btn-warning" href="/Penalties?eventId=@e.Id">Наказания</a>
+        <a class="btn btn-sm btn-dark" href="/Home/Live?eventId=@e.Id">Live</a>
+      </td>
+    </tr>
+  }
+  </tbody>
+</table>

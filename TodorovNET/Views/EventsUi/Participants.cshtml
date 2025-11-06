@@ -1,0 +1,18 @@
+﻿@model IEnumerable<TodorovNet.Models.Participant>
+@{ 
+    var ev = (TodorovNet.Models.Event)ViewBag.Event;
+    ViewData["Title"]="Участници";
+}
+<h2 class="mb-3">Участници – @ev.Title (@ev.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm"))</h2>
+
+<table class="table table-striped">
+  <thead class="table-dark">
+    <tr><th>#</th><th>Име</th><th>Отбор</th></tr>
+  </thead>
+  <tbody>
+  @foreach (var p in Model)
+  {
+    <tr><td>@p.Number</td><td>@p.Name</td><td>@p.Team</td></tr>
+  }
+  </tbody>
+</table>
