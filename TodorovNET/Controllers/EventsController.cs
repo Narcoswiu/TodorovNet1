@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using TodorovNet.Data;
+using Microsoft.EntityFrameworkCore;
 using TodorovNet.Models;
 
 namespace TodorovNet.Controllers
