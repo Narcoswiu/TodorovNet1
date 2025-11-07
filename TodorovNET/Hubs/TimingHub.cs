@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System.Threading.Tasks;
 
 namespace TodorovNet.Hubs
 {
@@ -11,5 +10,4 @@ namespace TodorovNet.Hubs
         public Task UnsubscribeFromEvent(string eventId)
             => Groups.RemoveFromGroupAsync(Context.ConnectionId, $"event_{eventId}");
     }
-
 }

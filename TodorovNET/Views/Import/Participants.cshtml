@@ -1,0 +1,31 @@
+﻿@{
+    var ev = (TodorovNet.Models.Event)ViewBag.Event;
+    ViewData["Title"] = "Импорт на участници";
+}
+
+<h2 class="mb-3">Импорт на участници – @ev.Title</h2>
+
+@if (TempData["Msg"] != null)
+{
+     <div class="alert alert-success">@TempData["Msg"]</div>
+}
+@if (TempData["Err"] != null)
+{
+     <div class="alert alert-danger">@TempData["Err"]</div>
+}
+
+<p class="text-muted">
+    Очакван формат на колони (Header): <code>Number, Name, Team</code> &nbsp; (CSV или Excel)
+</p>
+
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="eventId" value="@ev.Id" />
+  <div class="mb-3">
+    <label class="form-label">Файл</label>
+    <input type="file" name="file" class="form-control"
+           accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xls,.xlsx"
+           required />
+  </div>
+  <button class="btn btn-success">Качи и импортирай</button>
+  <a class="btn btn-secondary" href="/EventsUi">Назад</a>
+</form>

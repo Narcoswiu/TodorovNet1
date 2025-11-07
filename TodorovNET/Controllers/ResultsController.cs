@@ -53,6 +53,8 @@ namespace TodorovNet.Controllers
 
             return Ok(results);
         }
+
+
         [HttpGet("standings/{eventId}")]
         public async Task<IActionResult> GetStandings(int eventId)
         {
@@ -66,7 +68,7 @@ namespace TodorovNet.Controllers
                 .Where(r => r.EventId == eventId && r.IsFinal)
                 .ToListAsync();
 
-            // по избор: най-бързият финален за участник
+            // (по избор) ако има няколко финални за участник – вземи най-бързия
             raw = raw.GroupBy(r => r.ParticipantId)
                      .Select(g => g.OrderBy(x => x.LapTime).First())
                      .ToList();
@@ -90,7 +92,7 @@ namespace TodorovNet.Controllers
                         r.IsFinal
                     };
                 })
-                .OrderBy(x => x.AdjustedSpan)
+                .OrderBy(x => x.AdjustedSpan) // ✅ истински TimeSpan
                 .Select(x => new TodorovNet.Models.Dtos.StandingRow
                 {
                     ParticipantId = x.ParticipantId,
@@ -106,6 +108,7 @@ namespace TodorovNet.Controllers
 
             return Ok(rows);
         }
+
 
 
     }
